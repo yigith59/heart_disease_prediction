@@ -60,6 +60,8 @@ hindistana ait veri setine yapılan düzenlemeler ise df_india_onisleme.py dosya
 - exerciseangia = egzersizde angina olup olmadığı
 - oldpeak = ST segmenti değişikliği
 
+---
+
 - komorbite: Hastanın serum kolesterolü ve açlık kan şekeri seviyelerine göre türetilmiş komorbidite yükü
 - rest: Dinlenme elektrokardiyografik sonuçları ve yüksek dinlenme kan basıncına göre türetilmiş özellik
 - max_hr: Hastanın yaşına göre beklenen maksimum kalp atış hızına kıyasla ulaştığı maksimum kalp atış hızı seviyesi (korelasyon nedenli drop)
@@ -67,13 +69,15 @@ hindistana ait veri setine yapılan düzenlemeler ise df_india_onisleme.py dosya
 - egzersiz_toleransi_skoru: Egzersize bağlı anjina, max_hr seviyesi ve oldpeak değerleri dikkate alınarak oluşturulmuş hastanın egzersiz toleransını özetler
 - age_gender değişkenleri = yaş grubu ve cinsiyete göre oluşturulan kombinasyonlara one hot encoding uygulanmış hali
 
+---
+### Hedef Değişken
 - target = hastalık varlığı
 
 
 
 
 ---
-## Sonuclar
+## Sonuçlar
 
 Model test verisi üzerinde dengeli ve yüksek başarı göstermiştir:
 - Accuracy (Doğruluk): %85
