@@ -1,48 +1,19 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import sklearn.model_selection
 from matplotlib import pyplot as plt
-# !pip install missingno
-import missingno as msno
-from datetime import date
 
-from sklearn.cluster import KMeans,AgglomerativeClustering
-from sklearn.linear_model import LinearRegression, SGDRegressor, LogisticRegression
-from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_error, r2_score, roc_auc_score, \
-    confusion_matrix, classification_report, balanced_accuracy_score, roc_curve, auc, silhouette_score
+
+from sklearn.linear_model import  LogisticRegression
+from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix, classification_report, roc_curve, auc
 from sklearn.model_selection import train_test_split, cross_val_score, KFold, cross_validate, GridSearchCV, \
     validation_curve
-from sklearn.neighbors import LocalOutlierFactor
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import sklearn.model_selection
-from matplotlib import pyplot as plt
-# !pip install missingno
-import missingno as msno
-from datetime import date
-
-from sklearn.cluster import KMeans,AgglomerativeClustering
-from sklearn.linear_model import LinearRegression, SGDRegressor, LogisticRegression
-from sklearn.metrics import accuracy_score, mean_squared_error, mean_absolute_error, r2_score, roc_auc_score, \
-    confusion_matrix, classification_report, balanced_accuracy_score, roc_curve, auc, silhouette_score
-from sklearn.model_selection import train_test_split, cross_val_score, KFold, cross_validate, GridSearchCV, \
-    validation_curve
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.preprocessing import MinMaxScaler, LabelEncoder, StandardScaler, RobustScaler, OneHotEncoder, \
-    PolynomialFeatures, OrdinalEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier,GradientBoostingClassifier,VotingClassifier,AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier, plot_tree, export_graphviz, export_text
-from sklearn.decomposition import PCA
-from sklearn.impute import KNNImputer
+from sklearn.tree import DecisionTreeClassifier
 
-from statsmodels.stats.proportion import proportions_ztest
 
-# pip install yellowbrick
-from yellowbrick.cluster import KElbowVisualizer
-from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 
 # pip install catboost
@@ -56,7 +27,7 @@ from lightgbm import LGBMClassifier
 
 import re
 import graphviz
-import pydotplus, skompiler, astor, joblib, warnings
+import pydotplus, joblib, warnings
 import EDA as eda
 
 
@@ -68,46 +39,44 @@ warnings.simplefilter(action='ignore', category=Warning)
 
 
 
-ucl_df = pd.read_csv("df_ucl")
+diger_df = pd.read_csv("datasets/df_diger")
 eda.ilkbakis(diger_df)
 
-india_df = pd.read_csv("df_india")
+india_df = pd.read_csv("datasets/df_india")
 eda.ilkbakis(india_df)
 
 
-for i in ucl_df.columns:
-    if ucl_df[i].dtype in ["int64","int32"]:
-        ucl_df[i] = ucl_df[i].astype(float)
+for i in diger_df.columns:   # uyumsuzluk çıkmaması adına
+    if diger_df[i].dtype in ["int64","int32"]:
+        diger_df[i] = diger_df[i].astype(float)
 
-for i in india_df.columns:
+for i in india_df.columns:    # uyumsuzluk çıkmaması adına
     if india_df[i].dtype in ["int64","int32"]:
         india_df[i] = india_df[i].astype(float)
 
 
 
-df_ = pd.concat([ucl_df,india_df],ignore_index=True)
+df_ = pd.concat([diger_df,india_df],ignore_index=True) # birleştirme işlemi
 df = df_.copy()
 
-X = df[[i for i in df.columns if i not in ["target"]]]
-y = df["target"]
-
-
-
+X = df[[i for i in df.columns if i not in ["target"]]] # X seçimi
+y = df["target"] # y seçimi
 
 
 
 
 X_train,X_test,y_train,y_test = train_test_split(X,y,train_size=0.8,test_size=0.2,random_state=42)
+# train test ayrımı
+
 
 ss = StandardScaler()
-X_train[[i for i in X_train.columns]]= ss.fit_transform(X_train[[i for i in X_train.columns]])
-X_test[[i for i in X_test.columns]]= ss.transform(X_test[[i for i in X_test.columns]])
-
-
+X_train = ss.fit_transform(X_train)
+X_test= ss.transform(X_test)
+# standart etme
 
 def algoritma_ozet(X,y,score = "accuracy"):
 
-    classifiers = [("LineerReg",LinearRegression()),
+    algoritmalar = [
                     ("LogReg",LogisticRegression()),
                     ("KNN",KNeighborsClassifier()),
                     ("CART", DecisionTreeClassifier()),
@@ -122,39 +91,41 @@ def algoritma_ozet(X,y,score = "accuracy"):
 
     liste = []
 
-    for (name,model) in classifiers:
-        cv_results = cross_validate(model,X,y,cv = 10, scoring=score)
-        print(f'Model= {name} , Skor= {score}, {cv_results["test_score"].mean()}')
-        liste.append((name,cv_results["test_score"].mean()))
-    return classifiers,liste
+    for (i,j) in algoritmalar:
+        cv = cross_validate(j,X,y,cv = 10, scoring=score)
+        print(f'Model= {i} , Skor= {score}, {cv["test_score"].mean()}')
+        liste.append((i,cv["test_score"].mean()))
+    return algoritmalar,liste
 
-classifiers, liste = algoritma_ozet(X_train,y_train,score="recall")
+algoritmalar, liste = algoritma_ozet(X_train,y_train,score="recall")
 
 
 
-def hiperparametre_opt(modelismi,X_train,y_train,score="roc_auc"):
+def hiperparametre_optimizasyonu(modelismi,X_train,y_train,score="roc_auc"):
 
     param_grid_xgbboost = {
+            'objective': 'binary:logistic',
+            'eval_metric': 'logloss',
             'eta': [0.05, 0.1],
             'max_depth': [3, 5],
             'n_estimators': [100, 200],
     }
     param_grid_lightgbm = {
-        'n_estimators': [150, 250, 350], 
-        'learning_rate': [0.05, 0.1],  
-        'num_leaves': [20, 31, 40], 
+        'n_estimators': [150, 250, 350],
+        'learning_rate': [0.05, 0.1],
+        'num_leaves': [20, 31, 40],
         'max_depth': [-1, 5, 7],
-        'colsample_bytree': [0.7, 0.8, 0.9], 
-        'subsample': [0.7, 0.8, 0.9],  
-        'reg_alpha': [0, 0.1],  
-        'reg_lambda': [0, 0.1] 
+        'colsample_bytree': [0.7, 0.8, 0.9],
+        'subsample': [0.7, 0.8, 0.9],
+        'reg_alpha': [0, 0.1],
+        'reg_lambda': [0, 0.1]
     }
     param_grid_filtered_cart = {
-            'max_depth': [None, 3, 5, 7, 10, 15], 
-            'min_samples_split': [2, 5, 10, 20],  
-            'min_samples_leaf': [1, 2, 4, 8], 
+            'max_depth': [None, 3, 5, 7, 10, 15],
+            'min_samples_split': [2, 5, 10, 20],
+            'min_samples_leaf': [1, 2, 4, 8],
             'max_features': [None, 'sqrt', 'log2', 0.5, 0.75],
-            'criterion': ['gini', 'entropy'] 
+            'criterion': ['gini', 'entropy']
     }
     param_grid_logistic = [
             {'solver': ['liblinear'], 'penalty': ['l1', 'l2'], 'C': [0.001, 0.01, 0.1, 1, 10, 100]},
@@ -162,15 +133,12 @@ def hiperparametre_opt(modelismi,X_train,y_train,score="roc_auc"):
             {'solver': ['saga'], 'penalty': ['l1', 'l2'], 'C': [0.001, 0.01, 0.1, 1, 10, 100]}
     ]
     param_grid_gbm = {
-        'n_estimators': [100, 200, 300, 400], 
-        'learning_rate': [0.01, 0.05, 0.1], 
-
-        'max_depth': [3, 4, 5, 6],  
-        'min_samples_split': [2, 5, 10],  
-        'min_samples_leaf': [1, 2, 4],  
-
-        'subsample': [0.7, 0.8, 0.9, 1.0] 
-
+        'n_estimators': [100, 200, 300, 400],
+        'learning_rate': [0.01, 0.05, 0.1],
+        'max_depth': [3, 4, 5, 6],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+        'subsample': [0.7, 0.8, 0.9, 1.0],
     }
 
 
@@ -187,18 +155,18 @@ def hiperparametre_opt(modelismi,X_train,y_train,score="roc_auc"):
 
 
 
-    for (param,name,func) in liste:
-        if name == modelismi:
-            model = func
-            grid_search = GridSearchCV(estimator=model,  
+    for (param,isim,fonk) in liste:
+        if isim == modelismi:
+            model = fonk
+            grid_search = GridSearchCV(estimator=model,
                                        param_grid=param,
-                                       cv=5, 
+                                       cv=5,
                                        scoring=score,
                                        verbose=1,
                                        n_jobs=-1
                                        )
 
-            grid_search.fit(X_train, y_train)  
+            grid_search.fit(X_train, y_train)
 
 
             print(f"\n En iyi hiperparametreler: {grid_search.best_params_}")
@@ -210,11 +178,17 @@ def hiperparametre_opt(modelismi,X_train,y_train,score="roc_auc"):
             continue
 
 
-grid_search_best_params1 = hiperparametre_opt("LightGBM",X_train, y_train)
-# best_params = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': 7, 'n_estimators': 150,'num_leaves': 20, 'reg_alpha': 0, 'reg_lambda': 0, 'subsample': 0.7}
+
+params = hiperparametre_optimizasyonu("LightGBM",X_train, y_train,score="recall")
+
+# params= {'colsample_bytree': 0.9, 'learning_rate': 0.05, 'max_depth': 7, 'n_estimators': 150,'num_leaves': 40, 'reg_alpha': 0.1, 'reg_lambda': 0.1, 'subsample': 0.7}
+# recall için en iyi parametreler
+# params2 = {'colsample_bytree': 0.7, 'learning_rate': 0.05, 'max_depth': -1, 'n_estimators': 150, 'num_leaves': 40, 'reg_alpha': 0, 'reg_lambda': 0, 'subsample': 0.7}
+# auc için en iyi parametreler
 
 
-model_l = LGBMClassifier(**grid_search_best_params1)
+model_l = LGBMClassifier(**params)
+
 model_l.get_params()
 model_l.fit(X_train,y_train)
 
@@ -230,7 +204,7 @@ y_train_prob = model_l.predict_proba(X_train)[:, 1]
 
 print(classification_report(y_test,y_pred))
 
-confusion_matrix(y_test,y_pred) 
+confusion_matrix(y_test,y_pred)
 
 
 
