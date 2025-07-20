@@ -22,8 +22,8 @@ Cardiovascular_Disease_Dataset.csv (Hindistan)
 kaynak = https://data.mendeley.com/datasets/dzz48mvjht/1
 
 
-- Clevland,switzerland,va ve hungary veri seti kendi aralarında birleştirilmiş olup bu veri setlerinin hazır hale getirilmesinde kullanılan kodlar ucl.py dosyasında bulunmakta. düzenlemeler sonucu oluşturulan dataframe df_diğer.csv olarak kaydedildi
-hindistana ait veri setine yapılan düzenlemeler ise india.py dosyasında bulunmakta . düzenlemeler sonucu oluşturulan dataframe df_india.csv olarak kaydedildi
+- Clevland,switzerland,va ve hungary veri seti kendi aralarında birleştirilmiş olup bu veri setlerinin hazır hale getirilmesinde kullanılan kodlar df_ucl_onisleme.py dosyasında bulunmakta. düzenlemeler sonucu oluşturulan dataframe df_ucl.csv olarak kaydedildi
+hindistana ait veri setine yapılan düzenlemeler ise df_india_onisleme.py dosyasında bulunmakta . düzenlemeler sonucu oluşturulan dataframe df_india.csv olarak kaydedildi
 
 ---
 
